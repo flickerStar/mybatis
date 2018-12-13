@@ -1,0 +1,193 @@
+############################################################mybatis简单搭建使用##########################################################
+1. 新建一个maven项目，并增加src/main/resource包，用于存放配置文件
+   （1）jdbc.properties
+   jdbc.driverClassName = com.mysql.jdbc.Driver
+   jdbc.url = jdbc:mysql://localhost:3306/demotest?characterEncoding=utf-8&amp;allowMultiQueries=true&amp;useSSL=false&amp;zeroDateTimeBehavior=round
+   jdbc.username = root
+   jdbc.password = root
+   （2）mybatis-config.xml 
+        1）配置jdbc.properties的引入
+            <properties resource="jdbc.properties"/>
+        2）设置一些可选配置,如：
+            <settings>
+                  <!-- 打开延迟加载的开关 -->
+                  <setting name="lazyLoadingEnabled" value="true"/>
+                  <!-- 将积极加载改为消极加载，即延迟加载 -->
+                  <setting name="aggressiveLazyLoading" value="false"/>
+                  <!-- 指定mybatis的日志信息打印 -->
+                  <!-- <setting name="logImpl" value="STDOUT_LOGGING" />  -->
+                  <!-- 指定开启二级缓存 -->
+                  <!-- <setting name="cacheEnabled" value="true"/>   -->
+            </settings>
+        3）为实体类取别名，可以选择不配置此项,若配置,如下：
+            <!-- 指定类的别名 -->
+            <typeAliases>
+                  <!-- 为实体类com.dirtystar.study.pojo.User配置一个别名User -->
+                  <!-- <typeAlias alias="User" type="com.dirtystar.study.pojo.User" /> -->
+                  <!-- 为com.dirtystar.study.pojo包下的所有实体类配置别名，MyBatis默认的设置别名的方式就是去除类所在的包后的简单的类名
+        	比如com.dirtystar.study.pojo.User这个实体类的别名就会被设置成User -->
+                  <package name="com.mybatis.generator.pojo"/>
+            </typeAliases>
+        4）配置数据库连接信息
+            <!-- 使用 spring 配置数据库的时候，下面就可以注释掉了 -->
+            <!-- 定义数据库信息，默认使用 development 数据库构建环境 -->
+            <!-- development : 开发模式	 work : 工作模式 -->
+            <environments default="development">
+                <environment id="development">
+                    <!-- 采用 jdbc 事务管理 -->
+                    <transactionManager type="JDBC" />
+                    <!-- 配置数据库链接信息 -->
+                    <dataSource type="POOLED">
+                        <!-- value属性值引用jdbc.properties配置文件中配置的值 -->
+                        <property name="driver" value="${jdbc.driverClassName}" />
+                        <property name="url" value="${jdbc.url}" />
+                        <property name="username" value="${jdbc.username}" />
+                        <property name="password" value="${jdbc.password}" />
+                    </dataSource>
+                </environment>
+           </environments>
+        5）设置映射文件
+          <!-- 定义映射器 -->
+          <mappers>
+              <!-- 使用这个方案，可以单独指定Mapper的位置 -->
+              <!-- 注册映射文件 -->
+              <mapper resource="com/mybatis/generator/util/UtilMapper.xml" />
+
+        <!-- 使用下面两个方法，Mapper.xml 文件位置必须在和其内部 <mapper namespace="">的类在
+        	一起，当然，使用注解模式的话，Mapper.xml文件就没有必要存在了 -->
+
+              <!-- class 级别的指定 -->
+              <!-- 注册接口 -->
+              <mapper class="com.mybatis.study.mapper.UserMapper"/>
+
+              <!-- 直接指定一个包去扫描-内保包含多个Mapper配置- -->
+              <!-- 注册包 -->
+              <!-- <package name="com.mybatis.study.mapper"/> -->
+        </mappers>
+2.配置pom.xml
+    （1）导入需要的基础包
+          1）junit测试jar
+          <!-- junit测试 -->
+          <dependency>
+              <groupId>junit</groupId>
+              <artifactId>junit</artifactId>
+              <version>3.8.1</version>
+              <scope>test</scope>
+          </dependency>
+         2）mybatis核心包
+         <!-- mybatis核心包 -->
+         <dependency>
+              <groupId>org.mybatis</groupId>
+              <artifactId>mybatis</artifactId>
+              <version>3.2.8</version>
+         </dependency>
+         3）数据库jar,此处我使用的是mysql
+         <!-- mysql连接数据库 -->
+         <dependency>
+              <groupId>mysql</groupId>
+              <artifactId>mysql-connector-java</artifactId>
+              <version>5.1.38</version>
+         </dependency>
+         4）此项目我使用了QueryExample公用类,因此多导入它需要的jar
+         <!-- 使用公用的example需要的包 -->
+         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
+         <dependency>
+              <groupId>org.apache.commons</groupId>
+              <artifactId>commons-lang3</artifactId>
+              <version>3.8.1</version>
+        </dependency>
+    （2）自定义配置
+      <build>
+        <plugins>
+            <plugin>
+                <!-- 最好配置一下 -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <!-- 源代码使用的开发版本 -->
+                    <source>1.8</source>
+                    <!-- 需要生成的目标class文件的编译版本 -->
+                    <target>1.8</target>
+                    <!-- 一般而言，target与source是保持一致的，但是，
+                    	有时候为了让程序能在其他版本的jdk中运行(对于低版本目标jdk，源代码中需要没有使用低版本jdk中不支持的语法)，
+                    	会存在target不同于source的情况 -->
+                </configuration>
+            </plugin>
+        </plugins>
+      </build>
+
+3.src/main/java下新建com.mybatis.generator.pojo(存放QueryExample.java)
+4.src/main/java下新建com.mybatis.generator.util(存放utilMapper.xml and utilMapper.java)
+5.使用mybatis-generator生成对应的实体类User.java及对应的mapper UserMapper.xml 和 UserMapper.java
+6.测试类可以参考TestOne,TestTwo
+
+########################################################################################################################################
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%mybatis添加日志%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+1.在简单搭建的基础上
+
+2.pom.xml新引入jar
+   <!-- log4j日志 -->
+    <dependency>
+      <groupId>org.bgee.log4jdbc-log4j2</groupId>
+      <artifactId>log4jdbc-log4j2-jdbc4.1</artifactId>
+      <version>1.16</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.13</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.7.13</version>
+    </dependency>
+    
+3.在src/main/resource包下，添加日志配置文件 log4j.properties
+
+   ### 设置Logger输出级别和输出目的地 
+   ### debug更详细,如果设为info那么打印出的表数据遇到字符串就不显示，此外还有logfile
+   log4j.rootLogger=debug,stdout,logfile
+ 
+   ### 把日志信息输出到控制台 ### 
+   log4j.appender.stdout=org.apache.log4j.ConsoleAppender 
+   #log4j.appender.stdout.Target=System.err 
+   log4j.appender.stdout.Encoding=UTF-8
+   log4j.appender.stdout.layout=org.apache.log4j.SimpleLayout 
+ 
+   ### 把日志信息输出到文件：logfile.log ### 
+   log4j.appender.logfile=org.apache.log4j.FileAppender 
+   log4j.appender.logfile.File=D:/logfile.log 
+   log4j.appender.logfile.Encoding=UTF-8
+   log4j.appender.logfile.layout=org.apache.log4j.PatternLayout 
+   log4j.appender.logfile.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss} %F %p %m%n 
+ 
+   ###显示SQL语句部分 
+   log4j.logger.com.mybatis=DEBUG
+   log4j.logger.com.mybatis.common.jdbc.SimpleDataSource=DEBUG 
+   log4j.logger.com.mybatis.common.jdbc.ScriptRunner=DEBUG 
+   log4j.logger.com.mybatis.sqlmap.engine.impl.SqlMapClientDelegate=DEBUG 
+   log4j.logger.java.sql.Connection=DEBUG
+   log4j.logger.java.sql.Statement=DEBUG
+   log4j.logger.java.sql.PreparedStatement=DEBUG
+   log4j.logger.java.sql.ResultSet=DEBUG
+   
+4.在mybatis的主配置文件mybatis-config.xml中设置引用log4j日志
+        设置一些可选配置,如：
+        <settings>
+             <!-- 打开延迟加载的开关 -->
+             <setting name="lazyLoadingEnabled" value="true"/>
+             <!-- 将积极加载改为消极加载，即延迟加载 -->
+             <setting name="aggressiveLazyLoading" value="false"/>
+             <!-- 指定mybatis的日志信息打印 -->
+             <setting name="logImpl" value="STDOUT_LOGGING" />
+             <!-- 指定开启二级缓存 -->
+             <!-- <setting name="cacheEnabled" value="true"/>   -->
+        </settings>
+        
+5.再次运行TestOne、TestTwo即可发现sql语句都打印出来了
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
