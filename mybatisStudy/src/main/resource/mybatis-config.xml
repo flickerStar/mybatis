@@ -22,7 +22,7 @@
 		<!-- 将积极加载改为消极加载，即延迟加载 -->
 		<setting name="aggressiveLazyLoading" value="false"/>
 		<!-- 指定mybatis的日志信息打印 -->
-        <!-- <setting name="logImpl" value="STDOUT_LOGGING" />  -->
+        	<setting name="logImpl" value="STDOUT_LOGGING" />
         <!-- 指定开启二级缓存 -->
         <!-- <setting name="cacheEnabled" value="true"/>   -->
     </settings>
