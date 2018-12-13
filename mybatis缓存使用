@@ -1,0 +1,27 @@
+###############################################################mybatis缓存使用##############################################################
+一、mybatis一级缓存
+1. 一级缓存基于PerpetualCache 的 HashMap本地缓存，其存储作用域为 Session，当 Session flush 或 close 之后，该Session中的所有 Cache 就将清空。
+2. 一级缓存是 SqlSession 级别的缓存
+3. mybatis的一级缓存作用域是Session级别，且是默认开启的
+4. mybatis的一级缓存生效条件： 前后两次查询条件一致，且未刷新或关闭缓存，中间没有执行过增删改操作，缓存就会生效
+注意：
+	Mybatis的缓存机制是基于id进行缓存，也就是说Mybatis在使用HashMap缓存数据时，是使用对象的id作为key，而对象作为value保存
+	
+将mybatisStudy项目直接拿来使用，即可测试一级缓存-->TestFirstCache
+
+二、mybatis二级缓存
+1. 二级缓存是mapper级别的缓存，使用二级缓存时，多个SqlSession使用同一个Mapper的sql语句去操作数据库，得到的数据会存在二级缓存区域
+2. 它同样是使用HashMapper进行数据存储，相比一级缓存SqlSession，二级缓存的范围更大，多个SqlSession可以共用二级缓存，二级缓存是跨SqlSession的。
+3. 二级缓存是多个SqlSession共享的，其作用域是mapper的同一个namespace，不同的SqlSession两次执行相同的namespace下的sql语句，且向sql中传递的参数也相同，
+即最终执行相同的sql语句，则第一次执行完毕会将数据库中查询的数据写到缓存（内存），第二次查询时会从缓存中获取数据，不再去底层数据库查询，从而提高查询效率。
+4. Mybatis默认没有开启二级缓存，需要在setting全局参数中配置开启二级缓存。
+5. Mybatis二级缓存的开启如下：
+		1）在mybatis的主配置文件mybatis-config.xml中配置：
+			<settings>          
+    			<setting name="cacheEnabled" value="true"/>  
+			</settings> 
+		2）在需要实现二级缓存的mapper.xml中配置开启二级缓存即可<cache></cache>,具体缓存规则可以具体配置，此处不细说
+		3）<cache></cache>是让mapper.xml中的所有查询方法都开启二级缓存，实际使用中，如某个查询不想使用二级缓存，可单独添加useCache = false,即可使当
+		前方法的二级缓存失效
+		
+	
