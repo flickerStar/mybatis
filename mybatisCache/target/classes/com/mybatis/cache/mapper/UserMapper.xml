@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.mybatis.cache.mapper.UserMapper" >
+  <resultMap id="BaseResultMap" type="com.mybatis.cache.pojo.User" >
+    <id column="id" property="id" jdbcType="BIGINT" />
+    <result column="user_name" property="userName" jdbcType="VARCHAR" />
+    <result column="password" property="password" jdbcType="VARCHAR" />
+    <result column="age" property="age" jdbcType="INTEGER" />
+    <result column="cell_phone" property="cellPhone" jdbcType="VARCHAR" />
+    <result column="is_del" property="isDel" jdbcType="TINYINT" />
+    <result column="cost" property="cost" jdbcType="DECIMAL" />
+  </resultMap>
+  <!-- 开启二级缓存 -->
+  <cache></cache>
+  <sql id="Base_Column_List" >
+    t.id, t.user_name, t.password, t.age, t.cell_phone, t.is_del, t.cost
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.mybatis.generator.pojo.QueryExample" useCache="false">
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from user t
+    <if test="_parameter != null" >
+      <include refid="com.mybatis.generator.util.UtilMapper.Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+    <if test="limit != null and limit > 0" >
+      limit #{offset},#{limit}
+    </if>
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long" >
+    delete from user
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.mybatis.generator.pojo.QueryExample" >
+    delete t from user t
+    <if test="_parameter != null" >
+      <include refid="com.mybatis.generator.util.UtilMapper.Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insertSelective" parameterType="com.mybatis.cache.pojo.User" >
+    insert into user
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="userName != null" >
+        user_name,
+      </if>
+      <if test="password != null" >
+        password,
+      </if>
+      <if test="age != null" >
+        age,
+      </if>
+      <if test="cellPhone != null" >
+        cell_phone,
+      </if>
+      <if test="isDel != null" >
+        is_del,
+      </if>
+      <if test="cost != null" >
+        cost,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=BIGINT},
+      </if>
+      <if test="userName != null" >
+        #{userName,jdbcType=VARCHAR},
+      </if>
+      <if test="password != null" >
+        #{password,jdbcType=VARCHAR},
+      </if>
+      <if test="age != null" >
+        #{age,jdbcType=INTEGER},
+      </if>
+      <if test="cellPhone != null" >
+        #{cellPhone,jdbcType=VARCHAR},
+      </if>
+      <if test="isDel != null" >
+        #{isDel,jdbcType=TINYINT},
+      </if>
+      <if test="cost != null" >
+        #{cost,jdbcType=DECIMAL},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.mybatis.generator.pojo.QueryExample" resultType="java.lang.Integer" >
+    select count(*) from user
+    <if test="_parameter != null" >
+      <include refid="com.mybatis.generator.util.UtilMapper.Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update user t
+    <set >
+      <if test="record.id != null" >
+        t.id = #{record.id,jdbcType=BIGINT},
+      </if>
+      <if test="record.userName != null" >
+        t.user_name = #{record.userName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.password != null" >
+        t.password = #{record.password,jdbcType=VARCHAR},
+      </if>
+      <if test="record.age != null" >
+        t.age = #{record.age,jdbcType=INTEGER},
+      </if>
+      <if test="record.cellPhone != null" >
+        t.cell_phone = #{record.cellPhone,jdbcType=VARCHAR},
+      </if>
+      <if test="record.isDel != null" >
+        t.is_del = #{record.isDel,jdbcType=TINYINT},
+      </if>
+      <if test="record.cost != null" >
+        t.cost = #{record.cost,jdbcType=DECIMAL},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="com.mybatis.generator.util.UtilMapper.Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+</mapper>

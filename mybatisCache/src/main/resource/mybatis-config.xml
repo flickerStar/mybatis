@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<!-- 元素首次出现必须符合下面的顺序
+			(properties?,settings?,typeAliases?,typeHandlers?,objectFactory?,
+			objectWrapperFactory?,reflectorFactory?,plugins?,environments?,
+			databaseIdProvider?,mappers?) 
+	-->
+	
+	<!-- 加载常量配置信息 -->
+	<!-- 可以覆盖重写，用于解密-http://www.mybatis.org/mybatis-3/zh/configuration.html
+		·在 properties 元素体内指定的属性首先被读取。
+		·然后根据 properties 元素中的 resource 属性读取类路径下属性文件或根据 url 属性指定的路径读取属性文件，并覆盖已读取的同名属性。
+		·最后读取作为方法参数传递的属性，并覆盖已读取的同名属性。 -->
+	<!-- 引用jdbc.properties配置文件 -->
+	<properties resource="jdbc.properties"/>
+	
+	<!-- 打印查询语句 -->
+	<settings>
+		<!-- 打开延迟加载的开关 -->
+		<setting name="lazyLoadingEnabled" value="true"/>
+		<!-- 将积极加载改为消极加载，即延迟加载 -->
+		<setting name="aggressiveLazyLoading" value="false"/>
+		<!-- 指定mybatis的日志信息打印 -->
+        <!-- <setting name="logImpl" value="STDOUT_LOGGING" /> --> 
+        <!-- 指定开启二级缓存 -->
+        <setting name="cacheEnabled" value="true"/>  
+    </settings>
+	
+	<!-- 指定类的别名 -->
+    <typeAliases>
+        <!-- 为实体类com.dirtystar.study.pojo.User配置一个别名User -->
+        <!-- <typeAlias alias="User" type="com.dirtystar.study.pojo.User" /> -->
+        
+        <!-- 为com.dirtystar.study.pojo包下的所有实体类配置别名，MyBatis默认的设置别名的方式就是去除类所在的包后的简单的类名
+        	比如com.dirtystar.study.pojo.User这个实体类的别名就会被设置成User -->
+        <package name="com.mybatis.generator.pojo"/>
+        
+    </typeAliases>
+    
+    <!-- 使用 spring 配置数据库的时候，下面就可以注释掉了 -->
+    <!-- 定义数据库信息，默认使用 development 数据库构建环境 -->
+    <!-- development : 开发模式	 work : 工作模式 -->
+    <environments default="development">
+        <environment id="development">
+            <!-- 采用 jdbc 事务管理 -->
+            <transactionManager type="JDBC" />
+            <!-- 配置数据库链接信息 -->
+            <dataSource type="POOLED">
+            	<!-- value属性值引用jdbc.properties配置文件中配置的值 -->
+                <property name="driver" value="${jdbc.driverClassName}" />
+                <property name="url" value="${jdbc.url}" />
+                <property name="username" value="${jdbc.username}" />
+                <property name="password" value="${jdbc.password}" />
+            </dataSource>
+        </environment>
+    </environments>
+    
+    <!-- 定义映射器 -->
+    <mappers>
+    	<!-- 使用这个方案，可以单独指定Mapper的位置 -->
+    	<!-- 注册映射文件 -->
+        <mapper resource="com/mybatis/generator/util/UtilMapper.xml" />
+        
+        <!-- 使用下面两个个方法，Mapper.xml 文件位置必须在和其内部 <mapper namespace="">的类在
+        	一起，当然，使用注解模式的话，Mapper.xml文件就没有必要存在了 -->
+        
+        <!-- class 级别的指定 -->
+        <!-- 注册接口 -->
+        <!-- <mapper class="com.mybatis.cache.mapper.UserMapper"/> -->
+        <!-- 直接指定一个包去扫描-内保包含多个Mapper配置- -->
+        <!-- 注册包 -->
+        <package name="com.mybatis.cache.mapper"/>
+        <package name="com.mybatis.cache.annotation.mapper"/>
+    </mappers>
+</configuration>
