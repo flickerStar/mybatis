@@ -9,6 +9,7 @@
 	
 将mybatisStudy项目直接拿来使用，即可测试一级缓存-->TestFirstCache
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 二、mybatis二级缓存
 1. 二级缓存是mapper级别的缓存，使用二级缓存时，多个SqlSession使用同一个Mapper的sql语句去操作数据库，得到的数据会存在二级缓存区域
 2. 它同样是使用HashMapper进行数据存储，相比一级缓存SqlSession，二级缓存的范围更大，多个SqlSession可以共用二级缓存，二级缓存是跨SqlSession的。
@@ -20,8 +21,141 @@
 			<settings>          
     			<setting name="cacheEnabled" value="true"/>  
 			</settings> 
-		2）在需要实现二级缓存的mapper.xml中配置开启二级缓存即可<cache></cache>,具体缓存规则可以具体配置，此处不细说
-		3）<cache></cache>是让mapper.xml中的所有查询方法都开启二级缓存，实际使用中，如某个查询不想使用二级缓存，可单独添加useCache = false,即可使当
-		前方法的二级缓存失效
-		
-	
+		2）指定Mapper开启二级缓存(Mybatis二级缓存，配置文件和接口注释是不能够配合使用的。)
+			(1)只能通过全注解的方式才能够生效；
+			   @CacheNamespace
+			   public interface UserMapper(
+    				@Select("select * from user where id = #{id}")
+    				@Options(useCache = true)
+    				List<User> getUser(Long id);
+			  }
+		       (2)或者全部通过xml配置文件的方式使用
+		          <?xml version="1.0" encoding="UTF-8"?>
+			  <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+			  <mapper namespace="com.mybatis.cache.userMapper>
+ 
+    				<cache>
+        				<property name="eviction" value="LRU" />
+        				<property name="flushInterval" value="6000000" />
+        				<property name="size" value="1024" />
+        				<property name="readOnly" value="false" />
+    				</cache>
+ 
+    				<select id="getUserById">
+        				select * from user where id = {id}
+    				</select >
+			</mapper>
+		3）<cache></cache>是让mapper.xml中的所有查询方法都开启二级缓存，实际使用中，如某个查询不想使用二级缓存，可单独添加
+		   useCache = false,即可使当前方法的二级缓存失效
+		   
+		   @CacheNamespace是让mapper.java中的所有查询方法都开启二级缓存，实际使用中，如某个查询不想使用二级缓存，可单独添加
+		   @Options(useCache = false)即可使当前方法的二级缓存失效
+6. 缓存命中率：
+	1. 从缓存中查找数据的几率
+	2. 缓存命中率 = 命中次数 / （命中次数 + 未命中次数） *100%
+7. 数据查找过程：二级缓存 -> 一级缓存 -> 数据库
+8. 简单总结：
+   (1) mybatis的二级缓存的范围是命名空间（namespace）
+   (2) 只要这个命名空间下有一个 insert、update、delete mybatis 就会把这个命名空间下的二级缓清空。
+   (3) 如果同一个sql在不同的命名空间下，就会出现脏数据，因为一个insert、update、deleted 了另一个可能还使用者缓存数据，这样就会出现数据的不一致性。
+   (4) 如果更新、删除、插入的频率比较高的话，就会删除所有缓存在添加所有缓存在删除，这样缓存的命中率很低或者说根本就起不到缓存作用而且会消耗资源。
+       所以在没解决这个问题的前提下，还是不提倡使用二级缓存。
+       
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+三、mybatis集成分布式二级缓存
+ 1. 原因：
+	mybatis中默认自带的二级缓存有个弊端，即无法实现分布式缓存，什么意思呢？就是说缓存的数据在自己的服务器上，假设现在有两个服务器A和B，用户访问
+	的时候访问了A服务器，查询后的缓存就会放在A服务器上，假设现在有个用户访问的是B服务器，那么他在B服务器上就无法获取刚刚那个缓存，所以我们为了解
+	决这个问题，就得找一个分布式的缓存，专门用来存储缓存数据的，这样不同的服务器要缓存数据都往它那里存，取缓存数据也从它那里取。这样就能解决上面
+	所说的问题，为了提高系统并发性能、我们一般对系统进行上面这种分布式部署（集群部署方式），所以要使用分布式缓存对缓存数据进行集中管理。但是
+	mybatis无法实现分布式缓存，需要和其它分布式缓存框架进行整合
+2. 为什么要整合EHCache? 
+   EHCache更专业，支持内存和硬盘缓存数据。
+3. EHCache缓存组件要求使用的实体类必须实现可序列化Serializable,否则会直接报错
+4. ehcache-cache提供了2个可选的缓存实现。
+	org.mybatis.caches.ehcache.EhcacheCache、org.mybatis.caches.ehcache.LoggingEhcache
+	区别是：
+		第二个带日志的缓存，mybatis初始化缓存时，如果Cache不是继承自LoggingEhcache，mybatis会使用LoggingEhcache装饰代理缓存，所以上面两
+		个缓存使用时并没有区别，都会输出缓存命中率的日志。
+5.EHCache的集成：(没有举例子，因为目前没有两台服务器）
+   1)添加项目依赖
+    	<!-- ehcache 相关依赖 -->
+        <!-- https://mvnrepository.com/artifact/org.ehcache/ehcache -->
+	<dependency>
+    		<groupId>org.ehcache</groupId>
+    		<artifactId>ehcache</artifactId>
+    		<version>3.6.1</version>
+	</dependency>
+        <!-- https://mvnrepository.com/artifact/org.mybatis/mybatis-ehcache -->
+        <dependency>
+    		<groupId>org.mybatis.caches</groupId>
+    		<artifactId>mybatis-ehcache</artifactId>
+    		<version>1.0.3</version>
+	</dependency>
+   2)mybatis-config.xml主配置文件中开启二级缓存
+   	<settings>          
+    		<setting name="cacheEnabled" value="true"/>  
+	</settings> 
+   3)导入了jar包后，配置mapper中cache中的type为ehcache对cache接口的实现类型。
+   	1、mapper.xml引入ehcache(基于xml配置)
+	 	<cache type="org.mybatis.caches.ehcache.EhcacheCache"/> 或者 <cache type="org.mybatis.caches.ehcache.LoggingEhcache"/>
+   	2、mapper.java引入ehcache（基于注解配置）
+		@CacheNamespace(implementation = org.mybatis.caches.ehcache.EhcacheCache.class) 
+			或者
+		@CacheNamespace(implementation = org.mybatis.caches.ehcache.LoggingEhcache.class)
+  4)classpath下配置ehcache.xml（不配置也可以使二级缓存起作用，但是最好是配置的）
+  	<?xml version="1.0" encoding="UTF-8" ?>
+<ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="ehcache.xsd"
+         updateCheck="true" monitoring="autodetect"
+         dynamicConfig="true">
+    <!--设置硬盘缓存目录：内存中存储不下就可以往这个目录下存储了。会自动生成数据文件-->
+    <diskStore path="D:/cache"/>
+    <!-- 默认ehcache缓存配置 -->
+    <defaultCache 
+                  maxEntriesLocalHeap="0"
+                  eternal="false"
+                  copyOnRead="false"
+                  copyOnWrite="false"
+                  timeToIdleSeconds="1200"
+                  timeToLiveSeconds="1200"
+                  overflowToDisk="true"
+                  diskPersistent="true">
+    </defaultCache>
+    <!-- 指定mapper独有的缓存配置 -->
+    <cache name="com.dirtystar.study.mapper.UserMapper"
+           maxEntriesLocalHeap="0"
+           eternal="false"
+           copyOnRead="false"
+           copyOnWrite="false"
+           timeToIdleSeconds="3600"
+           timeToLiveSeconds="1200"
+           overflowToDisk="true"
+           diskPersistent="true"
+           />
+ </ehcache>
+ 
+ 属性说明：
+
+* diskStore：指定数据在磁盘中的存储位置。
+* defaultCache：当借助CacheManager.add("demoCache") 创建Cache时，EhCache便会采用<defalutCache/>指定的的管理策略
+
+
+以下属性是必须的：
+* maxElementsInMemory - 在内存中缓存的element的最大数目 
+* maxElementsOnDisk - 在磁盘上缓存的element的最大数目，若是0表示无穷大
+* eternal - 设定缓存的elements是否永远不过期。如果为true，则缓存的数据始终有效，如果为false那么还要根据timeToIdleSeconds，timeToLiveSeconds判断
+* overflowToDisk - 设定当内存缓存溢出的时候是否将过期的element缓存到磁盘上
+
+以下属性是可选的：
+* timeToIdleSeconds - 当缓存在EhCache中的数据前后两次访问的时间超过timeToIdleSeconds的属性取值时，这些数据便会删除，
+默认值是0,也就是可闲置时间无穷大
+* timeToLiveSeconds - 缓存element的有效生命期，默认是0.,也就是element存活时间无穷大
+* diskSpoolBufferSizeMB 这个参数设置DiskStore(磁盘缓存)的缓存区大小.默认是30MB.每个Cache都应该有自己的一个缓冲区.
+* diskPersistent - 在VM重启的时候是否启用磁盘保存EhCache中的数据，默认是false。
+* diskExpiryThreadIntervalSeconds - 磁盘缓存的清理线程运行间隔，默认是120秒。每隔120s，相应的线程会进行一次EhCache中数据的清理工作
+* memoryStoreEvictionPolicy - 当内存缓存达到最大，有新的element加入的时候， 移除缓存中element的策略。默认是LRU（最近最少使用），可选的有LFU（最不
+常使用）和FIFO（先进先出）
+
+#########################################################################################################################################
